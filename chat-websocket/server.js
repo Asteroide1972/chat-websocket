@@ -22,10 +22,16 @@ wss.on('connection', (ws) => {
   
   // Escucha los mensajes enviados por el cliente
   ws.on('message', (message) => {
-    console.log(`Mensaje recibido: ${message}`);
+    // Verificar si el mensaje es un Buffer (binario)
+    if (Buffer.isBuffer(message)) {
+      // Convierte el Buffer a una cadena de texto
+      message = message.toString();
+      console.log(`Mensaje convertido a texto: ${message}`);
+    }
     
-    // Asegúrate de que el mensaje sea un string
+    // Asegúrate de que el mensaje sea una cadena de texto
     if (typeof message === 'string') {
+      console.log(`Mensaje recibido: ${message}`);
       // Envía el mensaje a todos los clientes conectados
       wss.clients.forEach(client => {
         if (client !== ws && client.readyState === WebSocket.OPEN) {
@@ -41,13 +47,10 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     console.log('Un usuario se ha desconectado');
   });
-
-  // Manejo de errores en WebSocket
-  ws.on('error', (error) => {
-    console.error('Error en la conexión WebSocket: ', error);
-  });
 });
 
 // Servir los archivos estáticos (HTML, JS, CSS)
 app.use(express.static('public'));
+
+
 

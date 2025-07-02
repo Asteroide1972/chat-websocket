@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat WebSocket</title>
+    <style>
+      body { font-family: Arial, sans-serif; }
+      #messages { border: 1px solid #ccc; padding: 10px; width: 300px; height: 200px; overflow-y: scroll; }
+      #input { width: 100%; margin-bottom: 10px; padding: 5px; }
+      button { padding: 5px 10px; background-color: #4CAF50; color: white; border: none; cursor: pointer; }
+      button:hover { background-color: #45a049; }
+    </style>
+  </head>
+  <body>
+    <h2>Chat en tiempo real</h2>
+    <div id="messages"></div>
+    <input type="text" id="input" placeholder="Escribe un mensaje..." />
+    <button id="sendButton">Enviar</button>
+
+    <script>
+      // Establecer la conexión WebSocket
+      const ws = new WebSocket('ws://localhost:3000');
+      const messagesDiv = document.getElementById('messages');
+      const inputField = document.getElementById('input');
+      const sendButton = document.getElementById('sendButton');
+
+      // Verificar si la conexión WebSocket se estableció correctamente
+      ws.onopen = function() {
+        console.log("Conexión WebSocket establecida");
+      };
+
+      // Manejo de errores en la conexión WebSocket
+      ws.onerror = function(error) {
+        console.log("Error en la conexión WebSocket: ", error);
+      };
+
+      // Escuchar los mensajes enviados por el servidor
+      ws.onmessage = function(event) {
+        const message = event.data;
+        console.log("Mensaje recibido:", message);  // Log para depurar
+
+        // Verificar si el mensaje es un Blob
+        if (message instanceof Blob) {
+          const reader = new FileReader();
+
+          // Convierte el Blob a una cadena de texto
+          reader.onload = function() {
+            const textMessage = reader.result;
+            console.log("Mensaje recibido como texto:", textMessage);
+            
+            // Asegurarse de que es una cadena de texto
+            if (typeof textMessage === 'string') {
+              const messageDiv = document.createElement('div');
+              messageDiv.textContent = textMessage;  // Mostrar el mensaje correctamente
+              messagesDiv.appendChild(messageDiv);
+
+              // Desplazar hacia abajo el contenedor de mensajes cuando se reciba un mensaje
+              messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } else {
+              console.error('Recibido un mensaje no válido:', textMessage);
+            }
+          };
+
+          reader.readAsText(message); // Lee el Blob como texto
+        } else {
+          console.log("Mensaje recibido como texto:", message);
+          // Si el mensaje no es un Blob, trata de mostrarlo directamente
+          const messageDiv = document.createElement('div');
+          messageDiv.textContent = message;
+          messagesDiv.appendChild(messageDiv);
+
+          // Desplazar hacia abajo el contenedor de mensajes cuando se reciba un mensaje
+          messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+      };
+
+      // Enviar mensaje al servidor cuando el usuario presiona Enter
+      inputField.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter' && inputField.value.trim() !== '') {
+          sendMessage();
+        }
+      });
+
+      // Enviar mensaje al servidor cuando se hace clic en el botón
+      sendButton.addEventListener('click', function() {
+        if (inputField.value.trim() !== '') {
+          sendMessage();
+        }
+      });
+
+      // Función para enviar el mensaje
+      function sendMessage() {
+        const message = inputField.value;
+        console.log("Enviando mensaje:", message);  // Log para depurar
+        ws.send(message);
+        inputField.value = '';  // Limpiar el campo de entrada
+      }
+    </script>
+  </body>
+</html>
+
+
+
+
+
